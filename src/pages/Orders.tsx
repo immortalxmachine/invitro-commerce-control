@@ -378,7 +378,8 @@ const Orders = () => {
                   </DropdownMenuRadioItem>
                   <DropdownMenuRadioItem value="cancelled">
                     <XCircle className="mr-2 h-4 w-4" /> Cancelled
-                  </DropdownMenuRadioGroup>
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
             <Button variant="outline">
