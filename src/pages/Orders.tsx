@@ -7,10 +7,11 @@ import { OrdersHeader } from "@/components/orders/OrdersHeader";
 import { OrdersTabContent } from "@/components/orders/OrdersTabContent";
 import { OrderDetailDialog } from "@/components/orders/OrderDetailDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/utils/toast";
 
 const Orders = () => {
-  const { orders, setOrders } = useAdmin();
+  const { orders, updateOrderStatus } = useAdmin();
+  const [localOrders, setLocalOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -33,7 +34,7 @@ const Orders = () => {
               id,
               quantity,
               price,
-              products(id, name)
+              product_id
             )
           `);
 
@@ -41,44 +42,72 @@ const Orders = () => {
           throw ordersError;
         }
 
+        // Fetch products information for all order items
+        const productIds = new Set<string>();
+        ordersData.forEach(order => {
+          order.order_items.forEach((item: any) => {
+            if (item.product_id) {
+              productIds.add(item.product_id);
+            }
+          });
+        });
+
+        const { data: productsData, error: productsError } = await supabase
+          .from('products')
+          .select('id, name')
+          .in('id', Array.from(productIds));
+
+        if (productsError) {
+          throw productsError;
+        }
+
+        // Create a map of product id to product details
+        const productMap = new Map();
+        productsData.forEach((product: any) => {
+          productMap.set(product.id, product);
+        });
+
         // Transform the data to match the Order type
-        const transformedOrders = ordersData.map(order => {
+        const transformedOrders = ordersData.map((order: any) => {
           // Compute customer name from profile or use placeholder
           const customerName = order.profiles ? 
             `${order.profiles.first_name || ''} ${order.profiles.last_name || ''}`.trim() || 'Unknown Customer' : 
             'Unknown Customer';
           
           // Transform items
-          const items = order.order_items.map(item => ({
-            productId: item.products.id,
-            productName: item.products.name,
-            quantity: item.quantity,
-            price: item.price
-          }));
+          const items = order.order_items.map((item: any) => {
+            const product = productMap.get(item.product_id);
+            return {
+              productId: item.product_id,
+              productName: product ? product.name : 'Unknown Product',
+              quantity: item.quantity,
+              price: Number(item.price)
+            };
+          });
 
           return {
             id: order.id,
             customer: customerName,
             date: order.created_at,
-            total: parseFloat(order.total),
+            total: Number(order.total),
             status: order.status,
             items: items
           };
         });
 
-        setOrders(transformedOrders);
+        setLocalOrders(transformedOrders);
       } catch (error) {
         console.error("Error fetching orders:", error);
-        toast.error("Failed to load orders");
+        toast("Failed to load orders");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchOrders();
-  }, [setOrders]);
+  }, []);
   
-  const filteredOrders = orders.filter(
+  const filteredOrders = localOrders.filter(
     order => 
       order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customer.toLowerCase().includes(searchTerm.toLowerCase())
@@ -100,7 +129,7 @@ const Orders = () => {
         <CardHeader>
           <CardTitle>Order Management</CardTitle>
           <CardDescription>
-            {isLoading ? 'Loading orders...' : `Showing ${filteredOrders.length} of ${orders.length} orders`}
+            {isLoading ? 'Loading orders...' : `Showing ${filteredOrders.length} of ${localOrders.length} orders`}
           </CardDescription>
         </CardHeader>
         <CardContent>

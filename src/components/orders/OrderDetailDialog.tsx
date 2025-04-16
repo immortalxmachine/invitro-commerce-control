@@ -1,4 +1,3 @@
-
 import { Order, useAdmin } from "@/contexts/AdminContext";
 import {
   Dialog,
@@ -35,7 +34,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/utils/toast";
 
 interface OrderDetailDialogProps {
   open: boolean;
@@ -48,7 +47,6 @@ export const OrderDetailDialog = ({ open, onOpenChange, selectedOrder }: OrderDe
 
   const handleStatusChange = async (orderId: string, status: string) => {
     try {
-      // Update in Supabase
       const { error } = await supabase
         .from('orders')
         .update({ status })
@@ -56,7 +54,6 @@ export const OrderDetailDialog = ({ open, onOpenChange, selectedOrder }: OrderDe
       
       if (error) throw error;
       
-      // Update in local state
       updateOrderStatus(orderId, status);
       toast.success(`Order status updated to ${status}`);
     } catch (error) {
