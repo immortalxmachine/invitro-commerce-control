@@ -22,6 +22,7 @@ const Orders = () => {
     const fetchOrders = async () => {
       try {
         setIsLoading(true);
+        // Fix the relationship ambiguity by specifying which foreign key to use
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select(`
@@ -30,7 +31,7 @@ const Orders = () => {
             status, 
             created_at,
             profiles(first_name, last_name),
-            order_items(
+            order_items!order_items_order_id_fkey(
               id,
               quantity,
               price,
@@ -52,20 +53,23 @@ const Orders = () => {
           });
         });
 
-        const { data: productsData, error: productsError } = await supabase
-          .from('products')
-          .select('id, name')
-          .in('id', Array.from(productIds));
+        // Only proceed with products query if there are product IDs to look up
+        let productMap = new Map();
+        if (productIds.size > 0) {
+          const { data: productsData, error: productsError } = await supabase
+            .from('products')
+            .select('id, name')
+            .in('id', Array.from(productIds));
 
-        if (productsError) {
-          throw productsError;
+          if (productsError) {
+            throw productsError;
+          }
+
+          // Create a map of product id to product details
+          productsData.forEach((product: any) => {
+            productMap.set(product.id, product);
+          });
         }
-
-        // Create a map of product id to product details
-        const productMap = new Map();
-        productsData.forEach((product: any) => {
-          productMap.set(product.id, product);
-        });
 
         // Transform the data to match the Order type
         const transformedOrders = ordersData.map((order: any) => {
@@ -98,7 +102,7 @@ const Orders = () => {
         setLocalOrders(transformedOrders);
       } catch (error) {
         console.error("Error fetching orders:", error);
-        toast("Failed to load orders");
+        toast.error("Failed to load orders");
       } finally {
         setIsLoading(false);
       }
