@@ -1,4 +1,3 @@
-
 import { Order, useAdmin } from "@/contexts/AdminContext";
 import {
   Dialog,
@@ -125,9 +124,9 @@ export const OrderDetailDialog = ({ open, onOpenChange, selectedOrder }: OrderDe
                   <TableRow key={item.productId}>
                     <TableCell>{item.productName}</TableCell>
                     <TableCell className="text-right">{item.quantity}</TableCell>
-                    <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">₹{item.price.toFixed(2)}</TableCell>
                     <TableCell className="text-right">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ₹{(item.price * item.quantity).toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -139,7 +138,7 @@ export const OrderDetailDialog = ({ open, onOpenChange, selectedOrder }: OrderDe
           
           <div className="flex justify-between items-center">
             <span className="font-medium">Order Total:</span>
-            <span className="text-xl font-bold">${selectedOrder.total.toFixed(2)}</span>
+            <span className="text-xl font-bold">₹{selectedOrder.total.toFixed(2)}</span>
           </div>
         </div>
         
