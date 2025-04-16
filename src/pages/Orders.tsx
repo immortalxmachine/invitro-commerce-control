@@ -22,7 +22,7 @@ const Orders = () => {
     const fetchOrders = async () => {
       try {
         setIsLoading(true);
-        // Fix the relationship ambiguity by specifying which foreign key to use
+        // Fetch orders with related data using the correct foreign key reference
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select(`
@@ -30,6 +30,7 @@ const Orders = () => {
             total, 
             status, 
             created_at,
+            user_id,
             profiles(first_name, last_name),
             order_items!order_items_order_id_fkey(
               id,
@@ -43,7 +44,7 @@ const Orders = () => {
           throw ordersError;
         }
 
-        // Fetch products information for all order items
+        // Collect all product IDs from order items for a single batch query
         const productIds = new Set<string>();
         ordersData.forEach(order => {
           order.order_items.forEach((item: any) => {
@@ -100,6 +101,7 @@ const Orders = () => {
         });
 
         setLocalOrders(transformedOrders);
+        console.log("Orders loaded:", transformedOrders);
       } catch (error) {
         console.error("Error fetching orders:", error);
         toast.error("Failed to load orders");
@@ -144,6 +146,7 @@ const Orders = () => {
               <TabsTrigger value="processing">Processing</TabsTrigger>
               <TabsTrigger value="shipped">Shipped</TabsTrigger>
               <TabsTrigger value="delivered">Delivered</TabsTrigger>
+              <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
             </TabsList>
             
             {isLoading ? (

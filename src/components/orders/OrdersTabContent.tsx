@@ -14,6 +14,7 @@ export const OrdersTabContent = ({ filteredOrders, onViewOrder }: OrdersTabConte
   const processingOrders = filteredOrders.filter(order => order.status === 'processing');
   const shippedOrders = filteredOrders.filter(order => order.status === 'shipped');
   const deliveredOrders = filteredOrders.filter(order => order.status === 'delivered');
+  const cancelledOrders = filteredOrders.filter(order => order.status === 'cancelled');
   
   return (
     <>
@@ -48,6 +49,13 @@ export const OrdersTabContent = ({ filteredOrders, onViewOrder }: OrdersTabConte
       <TabsContent value="delivered">
         <OrdersTable 
           filteredOrders={deliveredOrders} 
+          onViewOrder={onViewOrder} 
+        />
+      </TabsContent>
+      
+      <TabsContent value="cancelled">
+        <OrdersTable 
+          filteredOrders={cancelledOrders} 
           onViewOrder={onViewOrder} 
         />
       </TabsContent>
