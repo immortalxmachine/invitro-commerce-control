@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useAdmin, Product } from "@/contexts/AdminContext";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Table, 
   TableBody, 
@@ -52,37 +52,95 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { toast } from "@/utils/toast";
+
+interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  category?: string;
+  image?: string;
+  status: 'active' | 'inactive';
+  quantity: number;
+}
 
 const Products = () => {
-  const { products, deleteProduct } = useAdmin();
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        // Fetch products with their inventory
+        const { data, error } = await supabase
+          .from('products')
+          .select(`
+            *,
+            product_inventory(quantity)
+          `);
+
+        if (error) {
+          throw error;
+        }
+
+        // Transform data to match our Product interface
+        const productsWithInventory = data.map(product => ({
+          ...product,
+          quantity: product.product_inventory?.[0]?.quantity || 0,
+          status: product.in_stock ? 'active' : 'inactive'
+        }));
+
+        setProducts(productsWithInventory);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        toast.error('Failed to load products');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   const filteredProducts = products.filter(
     product => 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase())
+      (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-  
+
   const handleViewProduct = (product: Product) => {
     setSelectedProduct(product);
     setIsViewDialogOpen(true);
   };
   
-  const handleDeleteProduct = (product: Product) => {
-    setSelectedProduct(product);
-    setIsDeleteDialogOpen(true);
-  };
-  
-  const confirmDelete = () => {
-    if (selectedProduct) {
-      deleteProduct(selectedProduct.id);
+  const handleDeleteProduct = async (product: Product) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', product.id);
+
+      if (error) throw error;
+
+      setProducts(prevProducts => prevProducts.filter(p => p.id !== product.id));
+      toast.success('Product deleted successfully');
       setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error('Failed to delete product');
     }
   };
-  
+
+  if (loading) {
+    return <div className="p-6">Loading products...</div>;
+  }
+
   return (
     <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -140,14 +198,14 @@ const Products = () => {
                     <TableCell>
                       <div className="h-10 w-10 rounded-md bg-muted overflow-hidden">
                         <img
-                          src={product.image}
+                          src={product.image || '/placeholder.svg'}
                           alt={product.name}
                           className="h-full w-full object-cover"
                         />
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>{product.category}</TableCell>
+                    <TableCell>{product.category || 'Uncategorized'}</TableCell>
                     <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
                     <TableCell className="text-right">
                       <span className={product.quantity < 10 ? "text-red-500 font-medium" : ""}>
@@ -173,7 +231,10 @@ const Products = () => {
                           <DropdownMenuItem>
                             <Pencil className="mr-2 h-4 w-4" /> Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeleteProduct(product)}>
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedProduct(product);
+                            setIsDeleteDialogOpen(true);
+                          }}>
                             <Trash2 className="mr-2 h-4 w-4" /> Delete
                           </DropdownMenuItem>
                           <DropdownMenuItem>
@@ -205,7 +266,7 @@ const Products = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="rounded-md bg-muted overflow-hidden">
                 <img
-                  src={selectedProduct.image}
+                  src={selectedProduct.image || '/placeholder.svg'}
                   alt={selectedProduct.name}
                   className="w-full h-[200px] object-cover"
                 />
@@ -224,7 +285,7 @@ const Products = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Category:</span>
-                    <span>{selectedProduct.category}</span>
+                    <span>{selectedProduct.category || 'Uncategorized'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Stock:</span>
@@ -239,7 +300,9 @@ const Products = () => {
                 </div>
                 <div>
                   <h4 className="text-sm font-medium mb-1">Description:</h4>
-                  <p className="text-sm text-muted-foreground">{selectedProduct.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedProduct.description || 'No description available'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -268,7 +331,7 @@ const Products = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction onClick={() => handleDeleteProduct(selectedProduct!)}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
