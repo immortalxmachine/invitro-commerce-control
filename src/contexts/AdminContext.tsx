@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/utils/toast';
 
@@ -74,7 +73,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(false);
   
-  // Mock data for demonstration
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     totalProducts: 156,
     totalStock: 4890,
@@ -277,10 +275,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           : order
       )
     );
-    toast({
-      title: "Order status updated",
-      description: `Order ${orderId} is now ${status}`,
-    });
+    toast(`Order ${orderId} is now ${status}`);
   };
 
   const deleteProduct = (productId: string) => {
@@ -292,10 +287,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...prev,
       totalProducts: prev.totalProducts - 1
     }));
-    toast({
-      title: "Product deleted",
-      description: "The product has been removed from the system",
-    });
+    toast("The product has been removed from the system");
   };
 
   return (
