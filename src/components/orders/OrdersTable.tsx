@@ -30,6 +30,8 @@ import {
   XCircle 
 } from "lucide-react";
 import { OrderStatusBadge } from "./OrderStatusBadge";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/sonner";
 
 interface OrdersTableProps {
   filteredOrders: Order[];
@@ -39,8 +41,23 @@ interface OrdersTableProps {
 export const OrdersTable = ({ filteredOrders, onViewOrder }: OrdersTableProps) => {
   const { updateOrderStatus } = useAdmin();
 
-  const handleStatusChange = (orderId: string, status: string) => {
-    updateOrderStatus(orderId, status);
+  const handleStatusChange = async (orderId: string, status: string) => {
+    try {
+      // Update in Supabase
+      const { error } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId);
+      
+      if (error) throw error;
+      
+      // Update in local state
+      updateOrderStatus(orderId, status);
+      toast.success(`Order status updated to ${status}`);
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast.error("Failed to update order status");
+    }
   };
 
   return (
@@ -65,10 +82,10 @@ export const OrdersTable = ({ filteredOrders, onViewOrder }: OrdersTableProps) =
         ) : (
           filteredOrders.map((order) => (
             <TableRow key={order.id}>
-              <TableCell className="font-medium">{order.id}</TableCell>
+              <TableCell className="font-medium">{order.id.substring(0, 8)}...</TableCell>
               <TableCell>{order.customer}</TableCell>
               <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
-              <TableCell className="text-right">${order.total.toFixed(2)}</TableCell>
+              <TableCell className="text-right">₹{order.total.toFixed(2)}</TableCell>
               <TableCell className="text-center">
                 <OrderStatusBadge status={order.status} />
               </TableCell>

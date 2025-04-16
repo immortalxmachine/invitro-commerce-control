@@ -9,6 +9,12 @@ interface OrdersTabContentProps {
 }
 
 export const OrdersTabContent = ({ filteredOrders, onViewOrder }: OrdersTabContentProps) => {
+  // Filter orders by status for each tab
+  const pendingOrders = filteredOrders.filter(order => order.status === 'pending');
+  const processingOrders = filteredOrders.filter(order => order.status === 'processing');
+  const shippedOrders = filteredOrders.filter(order => order.status === 'shipped');
+  const deliveredOrders = filteredOrders.filter(order => order.status === 'delivered');
+  
   return (
     <>
       <TabsContent value="all">
@@ -19,27 +25,31 @@ export const OrdersTabContent = ({ filteredOrders, onViewOrder }: OrdersTabConte
       </TabsContent>
       
       <TabsContent value="pending">
-        <div className="text-center py-10 text-muted-foreground">
-          Filtered orders by "Pending" status would appear here
-        </div>
+        <OrdersTable 
+          filteredOrders={pendingOrders} 
+          onViewOrder={onViewOrder} 
+        />
       </TabsContent>
       
       <TabsContent value="processing">
-        <div className="text-center py-10 text-muted-foreground">
-          Filtered orders by "Processing" status would appear here
-        </div>
+        <OrdersTable 
+          filteredOrders={processingOrders} 
+          onViewOrder={onViewOrder} 
+        />
       </TabsContent>
       
       <TabsContent value="shipped">
-        <div className="text-center py-10 text-muted-foreground">
-          Filtered orders by "Shipped" status would appear here
-        </div>
+        <OrdersTable 
+          filteredOrders={shippedOrders} 
+          onViewOrder={onViewOrder} 
+        />
       </TabsContent>
       
       <TabsContent value="delivered">
-        <div className="text-center py-10 text-muted-foreground">
-          Filtered orders by "Delivered" status would appear here
-        </div>
+        <OrdersTable 
+          filteredOrders={deliveredOrders} 
+          onViewOrder={onViewOrder} 
+        />
       </TabsContent>
     </>
   );

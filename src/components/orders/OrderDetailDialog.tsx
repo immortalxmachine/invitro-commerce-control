@@ -1,3 +1,4 @@
+
 import { Order, useAdmin } from "@/contexts/AdminContext";
 import {
   Dialog,
@@ -33,6 +34,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/sonner";
 
 interface OrderDetailDialogProps {
   open: boolean;
@@ -43,8 +46,23 @@ interface OrderDetailDialogProps {
 export const OrderDetailDialog = ({ open, onOpenChange, selectedOrder }: OrderDetailDialogProps) => {
   const { updateOrderStatus } = useAdmin();
 
-  const handleStatusChange = (orderId: string, status: string) => {
-    updateOrderStatus(orderId, status);
+  const handleStatusChange = async (orderId: string, status: string) => {
+    try {
+      // Update in Supabase
+      const { error } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId);
+      
+      if (error) throw error;
+      
+      // Update in local state
+      updateOrderStatus(orderId, status);
+      toast.success(`Order status updated to ${status}`);
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast.error("Failed to update order status");
+    }
   };
 
   const getOrderStatusStep = (status: Order['status']) => {
