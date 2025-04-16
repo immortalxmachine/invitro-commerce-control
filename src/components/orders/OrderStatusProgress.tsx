@@ -21,10 +21,10 @@ export const OrderStatusProgress = ({ status }: OrderStatusProgressProps) => {
     <div className="bg-muted p-4 rounded-md">
       <h4 className="font-medium mb-2">Order Progress</h4>
       <div className="flex items-center">
-        <div className={`h-2 w-1/4 ${getOrderStatusStep(status) >= 0 ? 'bg-primary' : 'bg-muted-foreground'} rounded-l-full`}></div>
-        <div className={`h-2 w-1/4 ${getOrderStatusStep(status) >= 1 ? 'bg-primary' : 'bg-muted-foreground'}`}></div>
-        <div className={`h-2 w-1/4 ${getOrderStatusStep(status) >= 2 ? 'bg-primary' : 'bg-muted-foreground'}`}></div>
-        <div className={`h-2 w-1/4 ${getOrderStatusStep(status) >= 3 ? 'bg-primary' : 'bg-muted-foreground'} rounded-r-full`}></div>
+        <div className={`h-2 w-1/4 ${getOrderStatusStep(status) >= 0 ? 'bg-primary' : 'bg-muted-foreground'} rounded-l-full`} role="presentation"></div>
+        <div className={`h-2 w-1/4 ${getOrderStatusStep(status) >= 1 ? 'bg-primary' : 'bg-muted-foreground'}`} role="presentation"></div>
+        <div className={`h-2 w-1/4 ${getOrderStatusStep(status) >= 2 ? 'bg-primary' : 'bg-muted-foreground'}`} role="presentation"></div>
+        <div className={`h-2 w-1/4 ${getOrderStatusStep(status) >= 3 ? 'bg-primary' : 'bg-muted-foreground'} rounded-r-full`} role="presentation"></div>
       </div>
       <div className="flex justify-between text-xs mt-1">
         <span>Pending</span>
