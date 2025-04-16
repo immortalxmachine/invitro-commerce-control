@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -90,11 +89,21 @@ const Products = () => {
         }
 
         // Transform data to match our Product interface
-        const productsWithInventory = data.map(product => ({
-          ...product,
-          quantity: product.product_inventory?.[0]?.quantity || 0,
-          status: product.in_stock ? 'active' : 'inactive'
-        }));
+        const productsWithInventory = data.map(product => {
+          // Ensure status is either 'active' or 'inactive'
+          const status = product.in_stock ? 'active' : 'inactive' as 'active' | 'inactive';
+          
+          return {
+            id: product.id,
+            name: product.name,
+            description: product.description || '',
+            price: product.price,
+            category: product.category || 'Uncategorized',
+            image: product.image || '',
+            status: status,
+            quantity: product.product_inventory?.[0]?.quantity || 0
+          };
+        });
 
         setProducts(productsWithInventory);
       } catch (error) {
@@ -331,7 +340,7 @@ const Products = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => handleDeleteProduct(selectedProduct!)}>
+            <AlertDialogAction onClick={() => selectedProduct && handleDeleteProduct(selectedProduct)}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
