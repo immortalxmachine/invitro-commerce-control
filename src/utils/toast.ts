@@ -11,7 +11,10 @@ export const toast = (message: ToastMessage) => {
   if (typeof message === 'string') {
     return sonnerToast(message);
   } else {
-    return sonnerToast(message);
+    // When it's an object, use the overload of sonnerToast that takes title and description as separate arguments
+    return sonnerToast(message.title || '', { 
+      description: message.description 
+    });
   }
 };
 
